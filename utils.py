@@ -93,7 +93,7 @@ class NestedMaximizer(object):
         self.maximize1()
 
 class Maximizer(object):
-    def __init__(self, f, vs, g={}, pre=None, gen=None, method='bfgs', eps=1, iters=100000, debug=False, inf_ignore=np.inf):
+    def __init__(self, f, vs, g={}, pre=None, gen=None, method='bfgs', eps=1, iters=1000, debug=False, inf_ignore=np.inf):
         self.inf_ignore = inf_ignore
         self.debug = debug
         self.iters = iters
@@ -129,6 +129,7 @@ class Maximizer(object):
                     self.pre()
                 res = self.func(*[x0[a:b] for a, b in self.sz])
                 if np.isnan(res[0]).any() or np.isnan(res[1]).any() or (np.abs(res[0])>self.inf_ignore).any() or (np.abs(res[1])>self.inf_ignore).any():
+                    #print "skipp"
                     continue
                 if s is None:
                     s = res
@@ -139,6 +140,7 @@ class Maximizer(object):
                     N += 1
             s[0]/=N
             s[1]/=N
+            #print s
             return s
         self.f_and_df = f_and_df
     def argmax(self, vals={}, bounds={}):

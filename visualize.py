@@ -13,6 +13,7 @@ import utils
 import feature
 import pickle
 import sys
+import webcolors
 from car import Car
 
 class Visualizer(object):
@@ -57,6 +58,7 @@ class Visualizer(object):
             x=30, y=self.window.height-30,
             anchor_x='left', anchor_y='top'
         )
+        self.show_trajs = False
         def centered_image(filename):
             img = pyglet.resource.image(filename)
             img.anchor_x = img.width/2.
@@ -87,6 +89,8 @@ class Visualizer(object):
             self.heatmap_show = not self.heatmap_show
             if self.heatmap_show:
                 self.heatmap_valid = False
+        if symbol == key.A:
+            self.show_trajs = not self.show_trajs
         if symbol == key.J:
             joysticks = pyglet.input.get_joysticks()
             if joysticks and len(joysticks)>=1:
@@ -237,6 +241,17 @@ class Visualizer(object):
         sprite.x, sprite.y = obj.x[0], obj.x[1]
         sprite.rotation = obj.x[2] if len(obj.x)>=3 else 0.
         sprite.draw()
+    def draw_trajs(self):
+        for index in range(len(self.cars)):
+            car_color = self.cars[index].color
+            color = webcolors.name_to_rgb(car_color) # get color of car so we can draw trajectories with matching colors
+            traj = [point[0:2] for point in self.feed_x[index]] # grab all x,y components
+            traj = tuple([item for sublist in traj for item in sublist]) # flatten into a long list
+
+            graphics.draw(len(traj)/2, pyglet.gl.GL_LINES,
+                ('v2f', traj),
+                ('c3B', color*(len(traj)/2))
+            )
     def on_draw(self):
         self.window.clear()
         gl.glMatrixMode(gl.GL_PROJECTION)
@@ -263,6 +278,8 @@ class Visualizer(object):
                 self.draw_car(self.anim_x[car], car.color)
         if self.heat is not None:
             self.draw_heatmap()
+        if self.show_trajs:
+            self.draw_trajs()
         for car in self.cars:
             if car==self.main_car or car in self.visible_cars:
                 self.draw_car(self.anim_x[car], car.color)

@@ -86,7 +86,6 @@ class SimpleOptimizerCar(Car):
         self._reward = reward+100.*feature.bounded_control(self.bounds)
         self.optimizer = None
     def control(self, steer, gas):
-        print len(self.cache)
         if self.index<len(self.cache):
             self.u = self.cache[self.index]
         else:
