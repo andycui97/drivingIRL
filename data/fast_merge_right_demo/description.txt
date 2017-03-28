@@ -1,0 +1,15 @@
+Short demo to try to get irl to learn to pass a car.
+
+Irl should be run with the feature of speed set to be distance from 1.  
+
+Demonstrations pass on both the left and right. 
+
+
+optimizer = utils.Maximizer(L, [theta], gen=gen, method='gd', eps=0.1, debug=True, iters=10000, inf_ignore=100)
+
+
+[[3.0, -50.0, 10.0, 10.0, -60.0]]
+[array([  0.12118441, -50.98300634,  23.10744109,   3.11221324, -57.56491208])]
+
+
+

@@ -63,6 +63,41 @@ def highway():
     world.fences = [clane.shifted(2), clane.shifted(-2)]
     return world
 
+# basic world made for passing the simple optimizer car
+# demo mode
+def fast_merge_right_demo():
+    dyn = dynamics.CarDynamics(0.1)
+    world = World()
+    clane = lane.StraightLane([0., -1.], [0., 1.], 0.13)
+    world.lanes = [clane, clane.shifted(1), clane.shifted(-1)]
+    world.roads = [clane]
+    world.fences = [clane.shifted(2), clane.shifted(-2)]
+    d = shelve.open('cache', writeback=True)
+    world.cars.append(car.UserControlledCar(dyn, [0.0, -0.2, math.pi/2., 0.], color='white'))
+    world.cars.append(car.SimpleOptimizerCar(dyn, [0, 0, math.pi/2., .0], color='red'))
+    world.cars[1].reward = world.simple_reward(world.cars[1], speed=0.5)
+    return world
+
+
+# basic world made for passing the simple optimizer car
+# run mode
+def fast_merge_right_run():
+    theta = [  0.12118441, -50.98300634,  23.10744109,   3.11221324, -57.56491208]
+    dyn = dynamics.CarDynamics(0.1)
+    world = World()
+    clane = lane.StraightLane([0., -1.], [0., 1.], 0.13)
+    world.lanes = [clane, clane.shifted(1), clane.shifted(-1)]
+    world.roads = [clane]
+    world.fences = [clane.shifted(2), clane.shifted(-2)]
+    d = shelve.open('cache', writeback=True)
+    world.cars.append(car.SimpleOptimizerCar(dyn, [0.0, -0.2, math.pi/2., 0.], color='white'))
+    world.cars.append(car.SimpleOptimizerCar(dyn, [0, 0, math.pi/2., .0], color='red'))
+    world.cars[0].reward = world.simple_reward(world.cars[0], speed=1, theta=theta)
+    world.cars[1].reward = world.simple_reward(world.cars[1], speed=0.5)
+    return world
+
+
+
 def playground():
     dyn = dynamics.CarDynamics(0.1)
     world = World()
@@ -73,43 +108,6 @@ def playground():
     #world.cars.append(car.UserControlledCar(dyn, [0., 0., math.pi/2., 0.], color='orange'))
     world.cars.append(car.UserControlledCar(dyn, [-0.17, -0.17, math.pi/2., 0.], color='white'))
     return world
-
-def irl_ground1():
-    dyn = dynamics.CarDynamics(0.1)
-    world = World()
-    clane = lane.StraightLane([0., -1.], [0., 1.], 0.13)
-    world.lanes += [clane, clane.shifted(1), clane.shifted(-1)]
-    world.roads += [clane]
-    world.fences += [clane.shifted(2), clane.shifted(-2)]
-    d = shelve.open('cache', writeback=True)
-    cars = []
-
-    cars = [(-.13, 0., .5, 0.13),
-              (.02, .4, .8, 0.5),
-              (.13, .1, .6, .13),
-              (-.09, .8, .5, 0.),
-              (0., 1., 0.5, 0.),
-              (-.13, -0.5, 0.9, 0.13),
-              (.13, -.8, 1., -0.13),
-            ]
-    world.cars.append(car.SimpleOptimizerCar(dyn, [-.13, 2., math.pi/2., .01], color='red'))
-    world.cars.append(car.UserControlledCar(dyn, [-.13, -.2, math.pi/2., .01], color='yellow'))
-    def goal(g):
-        @feature.feature
-        def r(t, x, u):
-            return -(x[0]-g)**2
-        return r
-
-    world.cars[0].reward = world.simple_reward(world.cars[0], speed=1.)
-
-    for c, (x, y, s, gx) in zip(world.cars, cars):
-        c.reward = world.simple_reward(c, speed=s)+10.*goal(gx)
-
-    world.cars[0].reward = world.simple_reward(world.cars[0], speed=1.)
-
-    world.cars = world.cars[-1:]+world.cars[:-1]
-    world.objects.append(Object('cone', [0.-.13, 2.]))
-    return world    
 
 def irl_ground():
     dyn = dynamics.CarDynamics(0.1)
@@ -158,14 +156,31 @@ def irl_ground_redo():
 [-49.41780328,   7.56889171, -29.88617277, -43.16951913,   2.66180459],
 [ 31.76720093, -41.00733137, -11.04480014,   3.10109911, -17.74631041], 
 [-35.28080999,   7.16573391,  39.76757247, -29.46527668, -46.8011004 ],
-[ -9.15809793,  22.46761354,  16.02720722, -16.42384674,  13.66530697], 
-[ 22.74288425, -30.45558916,  21.02526639,  40.52208768, -22.98279955]]
+[ -9.15809793,  22.46761354,  16.02720722, -16.42384674,  13.66530697],
+[ 22.74288425, -30.45558916,  21.02526639,  40.52208768, -22.98279955],
+
+[-11.82435415, -45.55631605, -48.66029143,   4.7003656 ,  34.83941114]
+]
     learned_thetas = [
 [  0.63050464,  -0.25920318,   6.62276118,   1.36460598, -27.45587143],
 [  0.29136727, -45.62213084,  19.73830621,   2.16081166, -40.14207103], 
 [  8.67710219e-01,  -1.04749109e-02,   3.39600499e+01, 1.47286358e+00,  -4.74656408e+01],
 [  0.41207963,  -0.15903006,  19.09811664,   1.42279691, -23.45312591],
-[  0.87659958,  -5.29046734,  34.99991666,   1.62502487, -36.36590119]]
+[  0.87659958,  -5.29046734,  34.99991666,   1.62502487, -36.36590119],
+
+[  0.45852171, -45.9455371 ,  -4.8938928 ,   1.38068336, -28.57903624]
+]
+
+#off second run theta,
+#[array([-21.64797415, -41.91799587,  17.57049892,   2.9955055 ,   0.06245884]), array([-48.09720879,  30.55382214,  12.59564428, -14.51636909, -33.88826816])]
+#[array([-17.59146916, -41.91799587,  17.5817344 ,   2.74549597,  -8.84827121]), array([-27.52673679,  30.55382214,  12.65934233,   0.87643322, -55.85940466])]
+
+#off fifth run theta,
+#[-30.61573957 -33.34307184 -36.49309123 -20.69403454 -57.9208694 ]
+
+#T=1 cuts
+#[   0.38375847  -19.84508972    5.3975739   -46.28047522 -113.86290679]
+
 
     old_theta = [3., -50., 10., 20., -60.]
     dyn = dynamics.CarDynamics(0.1)
@@ -206,7 +221,7 @@ def irl_ground_redo():
     for c, (x, y, s, gx) in zip(world.cars, cars):
         c.reward = world.simple_reward(c, speed=s)+10.*goal(gx)
     world.cars.append(car.SimpleOptimizerCar(dyn, [0, -0.5, math.pi/2., .7], color='red'))
-    world.cars[-1].reward = world.simple_reward(world.cars[-1],speed=1,  theta= learned_thetas[4])#+300*goal(.13)
+    world.cars[-1].reward = world.simple_reward(world.cars[-1],speed=1,  theta= learned_thetas[5])#+300*goal(.13)
     world.cars = world.cars[-1:]+world.cars[:-1]
     return world
 

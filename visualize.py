@@ -17,7 +17,7 @@ import webcolors
 from car import Car
 
 class Visualizer(object):
-    def __init__(self, dt=0.5, fullscreen=False, name='unnamed', iters=1000, magnify=1.):
+    def __init__(self, dt=0.1, fullscreen=False, name='unnamed', iters=1000, magnify=1.):
         self.autoquit = False
         self.frame = None
         self.subframes = None
@@ -59,6 +59,10 @@ class Visualizer(object):
             anchor_x='left', anchor_y='top'
         )
         self.show_trajs = False
+        self.show_feature_sums = False
+        self.ticks_run = 0
+        self.theta_sum = [0,0,0,0,0]
+        self.feature_function = None
         def centered_image(filename):
             img = pyglet.resource.image(filename)
             img.anchor_x = img.width/2.
@@ -78,6 +82,22 @@ class Visualizer(object):
         self.cars = [c for c in world.cars]
         self.lanes = [c for c in world.lanes]
         self.objects = [c for c in world.objects]
+        self.fences = [c for c in world.fences]
+        self.roads = [c for c in world.roads]
+        def feature_calc(t,x,u, target_car):
+            res = [0,0,0,0,0]
+            for lane in self.lanes:
+                res[0] = res[0] + lane.gaussian()(t,x,u).eval()
+            for fence in self.fences:
+                res[1] = res[1] + fence.gaussian()(t,x,u).eval()
+            for road in self.roads:
+                res[2] = res[2] + road.gaussian(10.)(t,x,u).eval()
+            res[3] = res[3] + feature.speed(1.)(t,x,u)
+            for car in self.cars:
+                if car!=target_car:
+                    res[4] = res[4] + car.traj.gaussian()(t,x,u).eval()
+            return res
+        self.feature_function = feature_calc
     def on_key_press(self, symbol, modifiers):
         if symbol == key.ESCAPE:
             self.event_loop.exit()
@@ -91,6 +111,9 @@ class Visualizer(object):
                 self.heatmap_valid = False
         if symbol == key.A:
             self.show_trajs = not self.show_trajs
+        if symbol == key.F:
+            self.show_feature_sums = not self.show_feature_sums            
+            print 'Feature Sum: '+ str(self.show_feature_sums) + '\n press F to toggle'
         if symbol == key.J:
             joysticks = pyglet.input.get_joysticks()
             if joysticks and len(joysticks)>=1:
@@ -144,7 +167,14 @@ class Visualizer(object):
             car.move()
         for car, hist in zip(self.cars, self.history_x):
             hist.append(car.x)
-        self.prev_t = time.time()
+
+        if self.show_feature_sums:
+            self.prev_t = time.time()
+            self.ticks_run += 1
+            self.feature_sum = np.add(self.feature_sum, self.feature_function(0,self.main_car.x,self.main_car.u, self.main_car))
+            print self.ticks_run
+            print self.feature_sum
+            #print self.lanes[0].gaussian()(self.ticks_run,self.main_car.x,self.main_car.u).eval()
     def center(self):
         if self.main_car is None:
             return np.asarray([0., 0.])
@@ -300,6 +330,8 @@ class Visualizer(object):
         self.paused = True
         self.history_x = [[] for car in self.cars]
         self.history_u = [[] for car in self.cars]
+        self.ticks_run = 0
+        self.feature_sum = [0,0,0,0,0]
 
     def run(self, filename=None, pause_every=None):
         self.pause_every = pause_every

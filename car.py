@@ -7,7 +7,7 @@ from trajectory import Trajectory
 import feature
 
 class Car(object):
-    def __init__(self, dyn, x0, color='yellow', T=5):
+    def __init__(self, dyn, x0, color='yellow', T=15):
         self.data0 = {'x0': x0}
         self.bounds = [(-1., 1.), (-1., 1.)]
         self.T = T

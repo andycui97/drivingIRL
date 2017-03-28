@@ -31,7 +31,7 @@ def run_irl(world, car, reward, theta, data):
     L = tt.dot(g, tt.dot(tn.MatrixInverse()(H), g))+tt.log(tn.Det()(-H))
     for _ in gen():
         pass
-    optimizer = utils.Maximizer(L, [theta], gen=gen, method='gd', eps=0.1, debug=True, iters=20000, inf_ignore=100)
+    optimizer = utils.Maximizer(L, [theta], gen=gen, method='gd', eps=0.1, debug=True, iters=10000, inf_ignore=100)
     print type(optimizer.f_and_df)
     optimizer.maximize()
     print theta.get_value()
@@ -39,8 +39,9 @@ def run_irl(world, car, reward, theta, data):
 
 
 if __name__ == '__main__':
-
-    theta_list= [np.array([(np.random.random()-.5)*100, (np.random.random()-.5)*100.,(np.random.random()-.5)*100., (np.random.random()-.5)*100., (np.random.random()-.5)*100]) for i in range(1)]
+    # non-randomized
+    theta_list = [[3., -50., 10., 10., -60.]]
+    #theta_list= [np.array([(np.random.random()-.5)*100, (np.random.random()-.5)*100.,(np.random.random()-.5)*100., (np.random.random()-.5)*100., (np.random.random()-.5)*100]) for i in range(2)]
     results = []
     for theta_val in theta_list:
         optlist, args = getopt.gnu_getopt(sys.argv, 'w:c:')
@@ -75,7 +76,7 @@ if __name__ == '__main__':
         for lane in the_world.lanes:
             r = r + theta[0]*lane.gaussian()
         for fence in the_world.fences:
-            r = r + theta[1]*lane.gaussian()
+            r = r + theta[1]*fence.gaussian()
         for road in the_world.roads:
             r = r + theta[2]*road.gaussian(10.)
         r = r + theta[3]*feature.speed(1.)
