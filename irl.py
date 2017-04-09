@@ -31,16 +31,49 @@ def run_irl(world, car, reward, theta, data):
     L = tt.dot(g, tt.dot(tn.MatrixInverse()(H), g))+tt.log(tn.Det()(-H))
     for _ in gen():
         pass
-    optimizer = utils.Maximizer(L, [theta], gen=gen, method='gd', eps=0.1, debug=True, iters=10000, inf_ignore=100)
+    optimizer = utils.Maximizer(L, [theta], gen=gen, method='gd', eps=0.1, debug=True, iters=10000, inf_ignore=1000)
     print type(optimizer.f_and_df)
     optimizer.maximize()
     print theta.get_value()
     return theta.get_value()
 
 
+# sum of lanes, fences, road, speed, collision avoidance
+def five_feature_r(the_world, theta):
+    r = 0.1*feature.control()
+    for lane in the_world.lanes:
+        r = r + theta[0]*lane.gaussian()
+    for fence in the_world.fences:
+        r = r + theta[1]*fence.gaussian()
+    for road in the_world.roads:
+        r = r + theta[2]*road.gaussian(10.)
+    r = r + theta[3]*feature.speed(1.)
+    for car in the_world.cars:
+        if car!=the_car:
+            r = r + theta[4]*car.traj.gaussian()
+    return r
+
+# left lane, middle lane, right lane, fences, road, speed, collision avoidance
+def seven_feature_r(the_world, theta):
+    r = 0.1*feature.control()
+    r = r + theta[0]*the_world.lanes[0].gaussian()
+    r = r + theta[1]*the_world.lanes[1].gaussian()
+    r = r + theta[2]*the_world.lanes[2].gaussian()
+    for fence in the_world.fences:
+        r = r + theta[3]*fence.gaussian()
+    for road in the_world.roads:
+        r = r + theta[4]*road.gaussian(10.)
+    r = r + theta[5]*feature.speed(1.)
+    for car in the_world.cars:
+        if car!=the_car:
+            r = r + theta[6]*car.traj.gaussian()
+    return r
+
+
 if __name__ == '__main__':
     # non-randomized
-    theta_list = [[3., -50., 10., 10., -60.]]
+    #theta_list = [[3., -50., 10., 10., -60.]]
+    theta_list = [[0, 0, 0, 0, 0, 0, 0]]
     #theta_list= [np.array([(np.random.random()-.5)*100, (np.random.random()-.5)*100.,(np.random.random()-.5)*100., (np.random.random()-.5)*100., (np.random.random()-.5)*100]) for i in range(2)]
     results = []
     for theta_val in theta_list:
@@ -60,6 +93,7 @@ if __name__ == '__main__':
                 if isinstance(c, car.UserControlledCar):
                     the_car = c
         T = the_car.traj.T
+        T=5 # override
         train = []
         for fname in files:
             with open(fname) as f:
@@ -72,17 +106,8 @@ if __name__ == '__main__':
                     train.append(point)
         theta = utils.vector(5)
         theta.set_value(theta_val)
-        r = 0.1*feature.control()
-        for lane in the_world.lanes:
-            r = r + theta[0]*lane.gaussian()
-        for fence in the_world.fences:
-            r = r + theta[1]*fence.gaussian()
-        for road in the_world.roads:
-            r = r + theta[2]*road.gaussian(10.)
-        r = r + theta[3]*feature.speed(1.)
-        for car in the_world.cars:
-            if car!=the_car:
-                r = r + theta[4]*car.traj.gaussian()
+        #r = five_feature_r(the_world, theta)
+        r = seven_feature_r(the_world, theta)
         res = run_irl(the_world, the_car, r, theta, train)
         results.append(res)
     print '~~~~~~~~~~~~~~~~'

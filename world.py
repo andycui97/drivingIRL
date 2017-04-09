@@ -96,6 +96,55 @@ def fast_merge_right_run():
     world.cars[1].reward = world.simple_reward(world.cars[1], speed=0.5)
     return world
 
+# active probing world with one merge in
+# trajectory drawing mode
+def two_merge_traj():
+    dyn = dynamics.CarDynamics(0.1)
+    world=highway()
+    world.cars.append(car.UserControlledCar(dyn, [0.13, 0.2, math.pi/2., 0.], color='white'))
+    world.cars.append(car.UserControlledCar(dyn, [-.13, 0.2, math.pi/2., 0.], color='white'))
+    world.cars.append(car.SimpleOptimizerCar(dyn, [0, -.3, math.pi/2., .0], color='red'))
+    with open('data/two_merge_traj/two_merge_traj-1490744314.pickle') as f:
+        feed_u, feed_x = pickle.load(f)
+        world.cars[0].fix_control(feed_u[0])
+    with open('data/two_merge_traj/two_merge_traj-1490744613.pickle') as f:
+        feed_u, feed_x = pickle.load(f)
+        world.cars[1].fix_control(feed_u[1])
+    world.cars[2].reward = world.simple_reward(world.cars[2], speed=.7)
+    return world
+
+# active probing world with two merge in
+# trajectory drawing mode
+def two_merge_demo():
+    dyn = dynamics.CarDynamics(0.1)
+    world=highway()
+    world.cars.append(car.UserControlledCar(dyn, [0, 0.1, math.pi/2., .0], color='red'))
+    world.cars.append(car.UserControlledCar(dyn, [0.13, 0.2, math.pi/2., 0.], color='white'))
+    world.cars.append(car.UserControlledCar(dyn, [-.13, 0.2, math.pi/2., 0.], color='white'))
+    with open('data/two_merge_traj/two_merge_traj-1490744314.pickle') as f:
+        feed_u, feed_x = pickle.load(f)
+        world.cars[1].fix_control(feed_u[0])
+    with open('data/two_merge_traj/two_merge_traj-1490744613.pickle') as f:
+        feed_u, feed_x = pickle.load(f)
+        world.cars[2].fix_control(feed_u[1])
+    #world.cars[0].reward = world.simple_reward(world.cars[0], speed=.7)
+    return world
+
+def lane_cut():
+    dyn = dynamics.CarDynamics(0.1)
+    world=highway()
+    world.cars.append(car.UserControlledCar(dyn, [-.13, 0.2, math.pi/2., 0.], color='white'))
+    return world
+
+def lane_cut_run():
+    dyn = dynamics.CarDynamics(0.1)
+    world=highway()
+    world.cars.append(car.SimpleOptimizerCar(dyn, [-.13, 0.2, math.pi/2., 0.], color='white'))
+    world.cars[0].reward = world.simple_reward(world.cars[0], speed=1, theta=[-1264.1224982 , -1472.43401049,  -205.60746282,  -885.73160945,
+       -1394.14040446,   181.50131822, -1356.62990406])
+    return world
+
+
 
 
 def playground():

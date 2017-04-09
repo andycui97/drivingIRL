@@ -122,6 +122,8 @@ class Maximizer(object):
                 print x0
             s = None
             N = 0
+            res = None # should definitely be reassigned
+            print sum(1 for _ in self.gen())
             for _ in self.gen():
                 if self.pre:
                     for v, (a, b) in zip(self.vs, self.sz):
@@ -129,7 +131,6 @@ class Maximizer(object):
                     self.pre()
                 res = self.func(*[x0[a:b] for a, b in self.sz])
                 if np.isnan(res[0]).any() or np.isnan(res[1]).any() or (np.abs(res[0])>self.inf_ignore).any() or (np.abs(res[1])>self.inf_ignore).any():
-                    #print "skipp"
                     continue
                 if s is None:
                     s = res
@@ -138,6 +139,10 @@ class Maximizer(object):
                     s[0] += res[0]
                     s[1] += res[1]
                     N += 1
+            if N==0:
+                print 'WARN: gradient not found, passing random value'
+                N = 1
+                s = [np.array([0]), np.random.rand(len(res[1]))*5]
             s[0]/=N
             s[1]/=N
             print s[0], s[1].tolist()
